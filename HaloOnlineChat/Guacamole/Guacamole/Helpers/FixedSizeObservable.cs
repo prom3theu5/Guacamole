@@ -5,9 +5,8 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Threading;
 
-namespace HaloChat.Classes
+namespace Guacamole.Helpers
 {
     public class FixedSizeObservable<T> : ObservableCollection<T>
     {
@@ -19,14 +18,12 @@ namespace HaloChat.Classes
             _maxSize = maxSize;
         }
 
+
         protected override void InsertItem(int index, T item)
         {
-            App.Current.Dispatcher.Invoke((Action)delegate
-            {
                 if (Count >= _maxSize)
                     base.RemoveAt(0);
                 base.InsertItem(Count, item);
-            });
         }
     }
 }

@@ -46,6 +46,14 @@ namespace Guacamole.Game
             };
         }
 
+        public bool IsHostingOnlineSession()
+        {
+            for (var i = 0; i < 4; i++)
+                if (BitConverter.ToInt32(Game.Read(0x1a29d38 + i * 8, 4), 0) == 1)
+                    return true;
+            return false;
+        }
+
         public void Run()
         {
             while (Running)

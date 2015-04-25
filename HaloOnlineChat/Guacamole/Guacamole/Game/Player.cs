@@ -40,7 +40,7 @@ namespace Guacamole.Game
 
         public void Run()
         {
-            while (true)
+            while (Running)
             {
                 Thread.Sleep(5000);
                 var playerName = GetPlayerName().Replace("\0","");

@@ -106,13 +106,27 @@ namespace HaloChat
 
         void AllMessages_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
-            foreach (string item in e.NewItems)
+            if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Reset)
             {
-                _co.ChatMessages.Add(item);
                 App.Current.Dispatcher.Invoke((Action)delegate
+                   {
+                       ChatBox.ItemsSource = null;
+                       _co.ChatMessages.Clear();
+                       ChatBox.ItemsSource = _co.ChatMessages;
+                   });
+            }
+
+            if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add)
+            {
+                foreach (string item in e.NewItems)
                 {
-                    Scroller.ScrollToBottom();
-                });
+                    if (!_co.ChatMessages.Contains(item))
+                        _co.ChatMessages.Add(item);
+                    App.Current.Dispatcher.Invoke((Action)delegate
+                    {
+                        Scroller.ScrollToBottom();
+                    });
+                }
             }
         }
 
@@ -120,7 +134,8 @@ namespace HaloChat
         {
             if (e.Key == Key.Enter)
             {
-                    if (!_gameProcess.UseIRC)
+                if (string.IsNullOrWhiteSpace(InputBlock.Text)) return;
+                if (!_gameProcess.UseIRC)
                     {
                         if (_gameProcess._chatClient != null && _gameProcess._chatClient._isConnected)
                             _gameProcess._chatClient.SendMessage(InputBlock.Text);
@@ -137,7 +152,6 @@ namespace HaloChat
                 _co.ChatInput = InputBlock.Text;
                 _co.ProcessText();
                 Scroller.ScrollToBottom();
-                ChatBox.Focus();
             }
         }
         #endregion

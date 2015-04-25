@@ -60,13 +60,12 @@
     <Compile Include="Communication\IRC\ThreadManager.cs" />
     <Compile Include="Communication\IRC\User.cs" />
     <Compile Include="Communication\IRC\UserInfo.cs" />
-    <Compile Include="Game\CurrentGame.cs" />
     <Compile Include="Game\ElDorado.cs" />
-    <Compile Include="Game\Host.cs" />
     <Compile Include="Game\Player.cs" />
     <Compile Include="Game\Session.cs" />
     <Compile Include="Communication\TCP\Client.cs" />
     <Compile Include="Communication\TCP\Server.cs" />
+    <Compile Include="Helpers\FixedSizeObservable.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

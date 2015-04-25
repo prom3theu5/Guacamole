@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using System.Collections.ObjectModel;
 using Guacamole.Communication;
 using Guacamole.Communication.Irc;
+using Guacamole.Helpers;
 
 namespace Guacamole.Game
 {
@@ -60,8 +61,8 @@ namespace Guacamole.Game
 
         public Sessions _monitorSession;
         public Player _monitorPlayer;
-        public Host _monitorHost;
-        public ObservableCollection<string> AllMessages { get; set; }
+        private string IrcNick;
+        public FixedSizeObservable<string> AllMessages { get; set; }
 
         public event EventHandler ProcessLaunched;
         public event EventHandler ProcessClosed;
@@ -73,7 +74,7 @@ namespace Guacamole.Game
 
         public ElDorado()
         {
-            AllMessages = new ObservableCollection<string>();
+            AllMessages = new FixedSizeObservable<string>(20);
             UseIRC = false;
         }
 
@@ -108,25 +109,6 @@ namespace Guacamole.Game
                 _monitorPlayer.PlayerNameChanged += monitorPlayer_PlayerNameChanged;
                 _monitorPlayer.Run();
             });
-
-            Task.Run(() =>
-            {
-                _monitorHost = new Host(_gameProcess);
-                _monitorHost.HostNameChanged += _monitorHost_HostNameChanged;
-                _monitorHost.Run();
-            });
-        }
-
-        void _monitorHost_HostNameChanged(object sender, HostNameChangedEventArgs e)
-        {
-            Console.WriteLine("Host Name Changed: " + e.HostName);
-            if (_monitorHost.LocalHost) AllMessages.Add("You are Hosting a Game");
-            else AllMessages.Add("You are not the Host");
-        }
-
-        void _monitorGame_GameChanged(object sender, CurrentGameChangedEventArgs e)
-        {
-            Console.WriteLine("Current Game: " + e.GameName + " - " + e.GameMap + " - " + e.GameType);
         }
 
         public void StopMonitors()
@@ -141,14 +123,11 @@ namespace Guacamole.Game
                 _monitorPlayer.Running = false;
             }
 
-            if (_monitorHost != null && _monitorHost.Running)
-            {
-                _monitorHost.Running = false;
-            }
         }
 
         void monitorPlayer_PlayerNameChanged(object sender, PlayerNameChangedEventArgs e)
         {
+            AllMessages.Clear();
             AllMessages.Add("Player Name Changed To: " + e.PlayerName);
 
             if (UseIRC)
@@ -162,16 +141,15 @@ namespace Guacamole.Game
 
         void monitorSession_SessionChanged(object sender, SessionChangedEventArgs e)
         {
-            Console.WriteLine("Session Changed:");
-            Console.WriteLine("GameLoddyId: " + e.Server);
-            Console.WriteLine("ClientId: " + e.Client);
+            AllMessages.Add("Session Changed:");
+            AllMessages.Add("GameLoddyId: " + e.Server);
             if (_monitorSession.Server != "")
             {
                 if (!UseIRC)
                 {
                     KillClientsAndServer();
 
-                    if (_monitorHost.IsHostingOnlineSession())
+                    if (_monitorSession.IsHostingOnlineSession())
                     {
                         CreateServerAndJoin();
                         return;
@@ -188,10 +166,9 @@ namespace Guacamole.Game
                     }
                     else if (_ircClient != null && _ircClient.IsConnected && !_ircClient.IRCNetwork.Nickname.Contains(_monitorPlayer._playerName))
                     {
-                        DisconnectFromIrcChannel();
-                        return;
+                        _ircClient.Exit();
+                        ConnectToIrcServerAndChannel();
                     }
-                    ConnectToIrcServerAndChannel();
                 }
             }
         }
@@ -204,7 +181,7 @@ namespace Guacamole.Game
             Task.Run(() =>
             {
                 Random rnd = new Random();
-                var nick = _monitorPlayer._playerName + "-" + rnd.Next(1, 999);
+                IrcNick = _monitorPlayer._playerName + "-" + rnd.Next(1, 999);
                 _ircClient = new Communication.Irc.Protocols.ProtocolIrc();
                 _ircClient.Server = IrcServer;
                 _ircClient.IRCNetwork = new Network(_ircClient.Server, _ircClient);
@@ -213,22 +190,27 @@ namespace Guacamole.Game
                 _ircClient.IRCNetwork.On_PRIVMSG += IRCNetwork_On_PRIVMSG;
                 _ircClient.IRCNetwork.On_JOIN += IRCNetwork_On_JOIN;
                 _ircClient.IRCNetwork.On_PART += IRCNetwork_On_PART;
-                _ircClient.IRCNetwork.Nickname = nick;
-                _ircClient.IRCNetwork.UserName = "Halo Player " + nick;
+                _ircClient.IRCNetwork.Nickname = IrcNick;
+                _ircClient.IRCNetwork.UserName = "Halo Player " + IrcNick;
                 _ircClient.Open();
                 _ircClient.Join("#" + _monitorSession.Server);
+                AllMessages.Clear();
                 AllMessages.Add("Successfully started your chat server.");
             });
         }
 
         void IRCNetwork_On_PART(object sender, Network.NetworkChannelDataEventArgs e)
         {
-            AllMessages.Add(String.Format("<<<{0} has left the server>>>", e.SourceInfo.Nick));
+            if (e.SourceInfo.Nick != IrcNick)
+                AllMessages.Add(String.Format("<<[{0}] Left The Channel at {1}>>", e.SourceInfo.Nick, DateTime.Now.ToLongTimeString()));
         }
 
         void IRCNetwork_On_JOIN(object sender, Network.NetworkChannelEventArgs e)
         {
-            AllMessages.Add(String.Format("<<<{0} has joined the server>>>", e.SourceInfo.Nick));
+            if (e.SourceInfo.Nick != IrcNick)
+                AllMessages.Add(String.Format("<<[{0}] Joined The Channel at {1}>>", e.SourceInfo.Nick, DateTime.Now.ToLongTimeString()));
+            else
+                AllMessages.Add(String.Format("<<You have joined the new Session Channel>>", e.SourceInfo.Nick));
         }
 
         private void IRCNetwork_On_PRIVMSG(object sender, Network.NetworkPRIVMSGEventArgs e)
@@ -240,19 +222,20 @@ namespace Guacamole.Game
         {
             _ircClient.Part("#" + previousServerId);
             _ircClient.Join("#" + _monitorSession.Server);
+            AllMessages.Clear();
             AllMessages.Add("Connected to New Server");
         }
 
         public void DisconnectFromIrcChannel()
         {
-            if (_ircClient != null && _ircClient.IsConnected) _ircClient.Disconnect();
+            if (_ircClient != null && _ircClient.IsConnected) _ircClient.Exit();
         }
 
         public void SendIrcMessage(string message)
         {
             if (!_ircClient.IsConnected) return;
             _ircClient.Message(message, "#" + _monitorSession.Server);
-            AllMessages.Add(String.Format("[{0}] {1}", _monitorPlayer._playerName, message));
+            AllMessages.Add(String.Format("[{0}] [{1}] {2}", DateTime.Now.ToLongTimeString(), _monitorPlayer._playerName, message));
         }
         #endregion
 
@@ -354,15 +337,26 @@ namespace Guacamole.Game
 
             if (name == "eldorado.exe" && _gameProcess.ProcessId == pid)
             {
-                Console.WriteLine("Game process closed.");
+                AllMessages.Add("Game process closed.\nStopping Chat");
                 IsRunning = false;
 
                 StopMonitors();
+
+                if (UseIRC && _ircClient != null && _ircClient.IsConnected)
+                {
+                    _ircClient.Exit();
+                }
+
+                if (!UseIRC && _chatClient != null && _chatClient._isConnected)
+                {
+                    _chatClient.LogOut();
+                }
+
+                AllMessages.Add("Disconnected From Chat");
 
                 if (ProcessClosed != null)
                     ProcessClosed(this, EventArgs.Empty);
             }
         }
-
     }
 }
