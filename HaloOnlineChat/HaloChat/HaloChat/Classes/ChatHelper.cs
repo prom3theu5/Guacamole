@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Guacamole.Helpers;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -13,14 +14,12 @@ namespace HaloChat.Classes
     {
         string chatInput = string.Empty;
         public double ChatSize { get; set; }
-        public double InputSize { get; set; }
         FixedSizeObservable<string> chatMessages = new FixedSizeObservable<string>(20) { "Guacamole Started.\nDip Away!\n" };
 
         
         public ChatHelper()
         {
             ChatSize = 16;
-            InputSize = 24;
         }
         
         public string ChatInput

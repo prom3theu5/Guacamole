@@ -28,6 +28,7 @@ namespace HaloChat
 
         private ElDorado _gameProcess;
         ChatHelper _co = new ChatHelper();
+        KeyboardHook _listener;
 
         public MainWindow()
         {
@@ -39,11 +40,28 @@ namespace HaloChat
         #region Window Related Stuff (moving, resizing, Keyhook etc)
         void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
+            _listener = new KeyboardHook(KeyboardHook.Parameters.PassAllKeysToNextApp);
+            _listener.KeyIntercepted += _listener_KeyIntercepted;
+            MainGrid.RowDefinitions[0].Height = new GridLength(0);
             StartSystem();
+        }
+
+        void _listener_KeyIntercepted(KeyboardHook.KeyboardHookEventArgs e)
+        {
+            if (e.KeyName == "T")
+            {
+                App.Current.Dispatcher.Invoke((Action)delegate
+                {
+                    _listener.KeyIntercepted -= _listener_KeyIntercepted;
+                    this.Activate();
+                    InputBlock.Focus();
+                });
+            }
         }
 
         private void Window_Activated(object sender, EventArgs e)
         {
+            if (_listener != null)
             this.Topmost = true;
         }
 
@@ -57,6 +75,7 @@ namespace HaloChat
             _gameProcess.StopMonitors();
             if (!_gameProcess.UseIRC) _gameProcess.KillClientsAndServer();
             else _gameProcess.DisconnectFromIrcChannel();
+            _listener.Dispose();
             Environment.Exit(0);
         }
 
@@ -67,12 +86,12 @@ namespace HaloChat
 
         private void window_MouseEnter(object sender, MouseEventArgs e)
         {
-            toolGrid.Opacity = 1;
+            MainGrid.RowDefinitions[0].Height = new GridLength(1, GridUnitType.Star);
         }
 
         private void window_MouseLeave(object sender, MouseEventArgs e)
         {
-            toolGrid.Opacity = 0.15;
+            MainGrid.RowDefinitions[0].Height = new GridLength(0);
         }
 
         double resizeStep = 50;
@@ -135,6 +154,7 @@ namespace HaloChat
             if (e.Key == Key.Enter)
             {
                 if (string.IsNullOrWhiteSpace(InputBlock.Text)) return;
+                _listener.KeyIntercepted += _listener_KeyIntercepted;
                 if (!_gameProcess.UseIRC)
                     {
                         if (_gameProcess._chatClient != null && _gameProcess._chatClient._isConnected)
@@ -152,6 +172,7 @@ namespace HaloChat
                 _co.ChatInput = InputBlock.Text;
                 _co.ProcessText();
                 Scroller.ScrollToBottom();
+                Keyboard.ClearFocus();
             }
         }
         #endregion

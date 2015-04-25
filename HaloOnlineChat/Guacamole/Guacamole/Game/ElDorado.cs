@@ -215,7 +215,7 @@ namespace Guacamole.Game
 
         private void IRCNetwork_On_PRIVMSG(object sender, Network.NetworkPRIVMSGEventArgs e)
         {
-            AllMessages.Add(String.Format("[{0}] {1}", e.SourceInfo.Nick, e.Message));
+            AllMessages.Add(String.Format("[{0}] [{1}] {2}", DateTime.Now.ToLongTimeString(), e.SourceInfo.Nick, e.Message));
         }
 
         public void ConnectToNewIrcChannel(string previousServerId)

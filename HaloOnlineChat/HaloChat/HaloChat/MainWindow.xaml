@@ -15,13 +15,13 @@
         AllowsTransparency="True"
         x:Name="window"
         BorderBrush="AliceBlue"
-        Opacity="0.7">
+        Opacity="{Binding ElementName=OpacitySlider, Path=Value}">
     <Window.Resources>
         <classes:TextBlockDataConveter x:Key="DataConverter"/>
     </Window.Resources>
     
     
-    <Grid Background="Black">
+    <Grid Background="Black" x:Name="MainGrid">
         <Grid.RowDefinitions>
             <RowDefinition Height="1*"/>
             <RowDefinition Height="10*"/>
@@ -41,7 +41,7 @@
                     <ColumnDefinition />
                 </Grid.ColumnDefinitions>
                 <Image Grid.Column="0" Width="25" Source="/Resources/minus_icon_small.png" MouseLeftButtonDown="ResizeMinus_MouseLeftButtonDown"/>
-                <Image Grid.Column="1" Width="30" Source="/Resources/resize_icon_small.png" />
+                <Slider x:Name="OpacitySlider" Grid.Column="1" Width="50" VerticalAlignment="Center" Minimum="0.1" Maximum="1" Value="0.6" />
                 <Image Grid.Column="2" Width="25" Source="/Resources/plus_icon_small.png" MouseLeftButtonDown="ResizePlus_MouseLeftButtonDown"/>
             </Grid>
             <Image Grid.Column="2" Width="30" Source="/Resources/close_icon_small.png" MouseLeftButtonDown="Close_Click"/>
