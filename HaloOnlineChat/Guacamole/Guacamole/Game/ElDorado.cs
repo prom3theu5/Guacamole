@@ -150,6 +150,14 @@ namespace Guacamole.Game
         void monitorPlayer_PlayerNameChanged(object sender, PlayerNameChangedEventArgs e)
         {
             AllMessages.Add("Player Name Changed To: " + e.PlayerName);
+
+            if (UseIRC)
+            {
+                if (_ircClient != null && _ircClient.IsConnected && !_ircClient.IRCNetwork.Nickname.Contains(_monitorPlayer._playerName))
+                    DisconnectFromIrcChannel();
+                ConnectToIrcServerAndChannel();
+            }
+        
         }
 
         void monitorSession_SessionChanged(object sender, SessionChangedEventArgs e)
@@ -173,14 +181,17 @@ namespace Guacamole.Game
                 }
                 else
                 {
-                    if (_ircClient != null && _ircClient.IsConnected)
+                    if (_ircClient != null && _ircClient.IsConnected && _ircClient.IRCNetwork.Nickname.Contains(_monitorPlayer._playerName))
                     {
                         ConnectToNewIrcChannel(e.PreviousServer);
+                        return;
                     }
-                    else
+                    else if (_ircClient != null && _ircClient.IsConnected && !_ircClient.IRCNetwork.Nickname.Contains(_monitorPlayer._playerName))
                     {
-                        ConnectToIrcServerAndChannel();
+                        DisconnectFromIrcChannel();
+                        return;
                     }
+                    ConnectToIrcServerAndChannel();
                 }
             }
         }
@@ -189,8 +200,11 @@ namespace Guacamole.Game
         #region If Using IRC
         public void ConnectToIrcServerAndChannel()
         {
+            if (string.IsNullOrWhiteSpace(_monitorPlayer._playerName)) return;
             Task.Run(() =>
             {
+                Random rnd = new Random();
+                var nick = _monitorPlayer._playerName + "-" + rnd.Next(1, 999);
                 _ircClient = new Communication.Irc.Protocols.ProtocolIrc();
                 _ircClient.Server = IrcServer;
                 _ircClient.IRCNetwork = new Network(_ircClient.Server, _ircClient);
@@ -199,8 +213,8 @@ namespace Guacamole.Game
                 _ircClient.IRCNetwork.On_PRIVMSG += IRCNetwork_On_PRIVMSG;
                 _ircClient.IRCNetwork.On_JOIN += IRCNetwork_On_JOIN;
                 _ircClient.IRCNetwork.On_PART += IRCNetwork_On_PART;
-                _ircClient.IRCNetwork.Nickname = _monitorPlayer._playerName;
-                _ircClient.IRCNetwork.UserName = "Halo Player " + _monitorPlayer._playerName;
+                _ircClient.IRCNetwork.Nickname = nick;
+                _ircClient.IRCNetwork.UserName = "Halo Player " + nick;
                 _ircClient.Open();
                 _ircClient.Join("#" + _monitorSession.Server);
                 AllMessages.Add("Successfully started your chat server.");

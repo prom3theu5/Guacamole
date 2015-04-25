@@ -57,7 +57,7 @@ namespace HaloChat
             _gameProcess.StopMonitors();
             if (!_gameProcess.UseIRC) _gameProcess.KillClientsAndServer();
             else _gameProcess.DisconnectFromIrcChannel();
-            window.Close();
+            Environment.Exit(0);
         }
 
         private void Rectangle_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
