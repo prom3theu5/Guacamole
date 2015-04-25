@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.31101.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HaloChat", "HaloChat\HaloChat.csproj", "{5AED8C5E-7DDD-48D2-A95B-392E30440C6D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Guacamole", "..\Guacamole\Guacamole\Guacamole.csproj", "{37E54F0F-8E8E-495C-98D2-531E07D5D552}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5AED8C5E-7DDD-48D2-A95B-392E30440C6D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5AED8C5E-7DDD-48D2-A95B-392E30440C6D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5AED8C5E-7DDD-48D2-A95B-392E30440C6D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5AED8C5E-7DDD-48D2-A95B-392E30440C6D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{37E54F0F-8E8E-495C-98D2-531E07D5D552}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{37E54F0F-8E8E-495C-98D2-531E07D5D552}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{37E54F0F-8E8E-495C-98D2-531E07D5D552}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{37E54F0F-8E8E-495C-98D2-531E07D5D552}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
